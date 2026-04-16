@@ -1,16 +1,65 @@
 ---
-title: "Project proposal"
-author: "Team name"
+title: "Apatite geochemistry as a proxy for PCDs fertility"
+author: "Santiago Ramos Galarza"
 output: html_document
 ---
 
-```{r load-packages, message = FALSE}
+```{r load-packages, echo=TRUE, eval=T}
 library(tidyverse)
 library(broom)
 ```
 
-## 1. Data
+## 1. Introduction
+The data consists of apatite Rare Earth Elements (REEs) concentrations obtained via Laser Ablation Split Stream Inductively Coupled Plasma Mass Spectrometry (LASS-ICP-MS) at the University of California, Santa Barbara.
 
-## 2. Exploratory Visualization
+- **Cases**: Each case is a single point analysis (laser spot) on an apatite grain. Total $n=177$.
 
-## 3. Possible question and method
+
+- **Variables**: 
+
+  Predictor ($X$): Fertility status (Categorical: PCD (Copper rich samples) vs. Barren (Copper poor samples)).
+
+  Response ($Y$): Chondrite-normalized REE concentrations ($La_N$ through $Lu_N$) and the calculated $Eu$ anomaly.
+
+
+## 2. Data
+The dataset is stored as **apatite_data.csv**. 
+
+```{r load_data, echo=TRUE, eval=T}
+setwd("/cloud/project/project-starter")
+df <- read_csv("data/apatite_data.csv")
+glimpse (df)
+```
+
+Before analysis, I will use **dplyr** to normalize the raw ppm values to C1 Chondrite (McDonough & Sun, 1995) and calculate the $Eu$ anomaly.
+$$Eu/Eu^* = \frac{Eu_N}{\sqrt{Sm_N \times Gd_N}}$$
+
+
+## 3. Exploratory Visualization
+I will use **ggplot2** to visualize the geochemical overlap.
+
+- **Boxplots**: To compare the medians and IQRs of all REEs between the two groups.
+
+- **Summary Tables**: To calculate means and standard deviations.
+
+
+## 4. Possible question and method
+Which REEs show statistically significant differences when comparing apatite grains from PCDs versus barren intrusive rocks within the same region?
+
+
+I hypothesize that $Eu$ concentrations will differ because $Eu$ is a redox-sensitive proxy. In fertile PCDs systems, higher oxygen fugacity often prevents the development of a strong negative $Eu$ anomaly.
+
+
+To test my hypothesis, I will use:
+
+
+- **Randomization Tests**: I will simulate a null distribution to test if the observed difference in $Eu/Eu^*$ means between PCD and Barren samples is likely due to chance.
+
+
+- **Bootstrap Confidence Intervals**: I will calculate a 95% CI for the difference in means.
+
+
+- **Simple Linear Models**: I will fit models (e.g., $Eu\_anomaly \sim Type$) to determine the $R^2$, representing how much of the chemical variance is explained by fertility.
+
+
+- **(Proposed, not sure) Classification Tree**: I will use a Confusion Matrix and Cross-Validation to assess the model's accuracy. I will see if $Eu$ or $Ce$ are indeed the primary drivers of the classification.
