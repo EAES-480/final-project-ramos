@@ -29,13 +29,13 @@ library(rpart.plot)
 
 # Loading data
 
-```{r load-packages, echo=TRUE, eval=T}
+```{r read-data, echo=TRUE, eval=T}
 setwd("/cloud/project/project-starter") 
 df <- read_csv("data/apatite_data.csv")
 ```
 
 # C1 Chondrite values (McDonough & Sun, 1995) [ppm]
-```{r load-packages, echo=TRUE, eval=T}
+```{r chondrite-values, echo=TRUE, eval=T}
 chondrite <- c(La=0.237, Ce=0.612, Pr=0.0912, Nd=0.457, Sm=0.148, 
                Eu=0.0563, Gd=0.199, Tb=0.0361, Dy=0.246, Ho=0.0546, 
                Er=0.160, Tm=0.0247, Yb=0.161, Lu=0.0246)
@@ -183,7 +183,7 @@ rmse_calc <- model_results %>%
 rmse_calc
 ```
 
-## 7. Predictive Modeling: Classification Tree (Tidymodels)
+## Predictive Modeling: Classification Tree (Tidymodels)
 
 This will evaluate all normalized REEs simultaneously to find the optimal thresholds for distinguishing fertile (PCD) from barren magmas.
 
@@ -219,8 +219,7 @@ rpart.plot(tree_engine,
 ```
 ### Geochemical Overlap: REE Spider Diagram
 
-
-```{r tidymodels-tree, echo=TRUE, eval=TRUE}
+```{r spider-plot-managment, echo=TRUE, eval=TRUE}
 spider_data <- df_clean %>%
   mutate(Sample_ID = row_number()) %>% 
   select(Sample_ID, Type, ends_with("_N")) %>%
@@ -232,7 +231,7 @@ spider_data <- df_clean %>%
   mutate(Element = str_remove(Element, "_N"))
 ```
 
-```{r spide-diagram, echo=TRUE, eval=TRUE}
+```{r spider-plot, echo=TRUE, eval=TRUE}
 ree_order <- c("La", "Ce", "Pr", "Nd", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu")
 spider_data$Element <- factor(spider_data$Element, levels = ree_order)
 
