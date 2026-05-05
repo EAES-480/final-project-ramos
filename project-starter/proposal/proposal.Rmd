@@ -4,6 +4,12 @@ author: "Santiago Ramos Galarza"
 output: html_document
 ---
 
+> GM GRADE: 19/20 - excellent work!
+
+> Description: 8/8
+> Content: 9/10 - had to deduct a point here as I'd hoped to see a couple of example exploratory figures rather than just the descriptions.
+> Quality: 2/2
+
 ```{r load-packages, echo=TRUE, eval=T}
 library(tidyverse)
 library(broom)

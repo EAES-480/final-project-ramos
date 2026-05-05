@@ -1,6 +1,8 @@
 
 # Final Project Overview
 
+## April 27: Example presentation from 380: https://github.com/EAES-380/final-project-biogeo-biochem.git
+
 Choose a dataset and:  
 
   * apply data science to explore and wrangle
@@ -51,8 +53,9 @@ What you get: ZIP packages of multiple CSVs with country-level or sector-level g
 ## Deliverables
 
 1.  Proposal - due Wed. April 15, at midnight. (complete proposal.Rmd in your fork)
-2.  Executive summary - due Sunday, May 3, at midnight. (completed README.md in your fork)
-3.  Presentation - due Wed. May 6, 1-3pm (recording or live via Zoom)
+2.  Presentation - due Wed. May 6, 1-3pm (recording or live via Zoom)
+4.  Executive summary - due Sunday, May 10, at midnight. (completed README.md in your fork)
+
 
 ### Proposal
 
