@@ -1,12 +1,12 @@
 ---
-title: "Presentation title"
-subtitle: "Presentation subtitle (if any)"
-author: "Team name <br> Names of team members"
-institute: "University of Illinois at Chicago"
+title: "Apatite Geochemistry as a Proxy for PCDs Fertility"
+subtitle: "EAES 480 Final Project"
+author: "Santiago Ramos Galarza"
+institute: "University of Illinois Chicago"
 date: "`r Sys.Date()`"
 output:
   xaringan::moon_reader:
-    css: xaringan-themer.css
+    css: [default, metropolis, metropolis-fonts]
     lib_dir: libs
     nature:
       ratio: "16:9"
@@ -15,164 +15,335 @@ output:
       countIncrementalSlides: false
 ---
 
-```{r load-packages, include = FALSE}
-# Add any additional packages you need to this chunk
+```{r setup, include=FALSE}
+
+options(htmltools.dir.version = FALSE)
 library(tidyverse)
 library(tidymodels)
+library(broom)
+library(infer)
+library(rpart)
+library(rpart.plot)
 library(palmerpenguins)
 library(knitr)
 library(xaringanthemer)
-```
 
-```{r setup, include=FALSE}
 # For better figure resolution
-knitr::opts_chunk$set(fig.retina = 3, dpi = 300, fig.width = 6, fig.asp = 0.618, out.width = "80%")
+knitr::opts_chunk$set(fig.retina = 3, dpi = 70, fig.width = 6, fig.asp = 0.618, out.width = "80%")
+
+
+# Load and clean data silently for the presentation
+df <- read_csv("/cloud/project/project-starter/data/apatite_data.csv")
+chondrite <- c(La=0.237, Ce=0.612, Pr=0.0912, Nd=0.457, Sm=0.148, 
+               Eu=0.0563, Gd=0.199, Tb=0.0361, Dy=0.246, Ho=0.0546, 
+               Er=0.160, Tm=0.0247, Yb=0.161, Lu=0.0246)
+
+df_clean <- df %>%
+  mutate(
+    La_N = La139_ppm_mean / chondrite["La"],
+    Ce_N = Ce140_ppm_mean / chondrite["Ce"],
+    Pr_N = Pr141_ppm_mean / chondrite["Pr"],
+    Nd_N = Nd146_ppm_mean / chondrite["Nd"],
+    Sm_N = Sm147_ppm_mean / chondrite["Sm"],
+    Eu_N = Eu153_ppm_mean / chondrite["Eu"],
+    Gd_N = Gd157_ppm_mean / chondrite["Gd"],
+    Eu_anomaly = Eu_N / sqrt(Sm_N * Gd_N),
+    Tb_N = Tb159_ppm_mean / chondrite["Tb"],
+    Dy_N = Dy163_ppm_mean / chondrite["Dy"],
+    Ho_N = Ho165_ppm_mean / chondrite["Ho"],
+    Er_N = Er166_ppm_mean / chondrite["Er"],
+    Tm_N = Tm169_ppm_mean / chondrite["Tm"],
+    Yb_N = Yb172_ppm_mean / chondrite["Yb"],
+    Lu_N = Lu175_ppm_mean / chondrite["Lu"]
+  )
 ```
 
-```{r load-data, include=FALSE}
-# Load your data here
+# Introduction
+```{r castle, echo = FALSE, out.width = "100%", fig.align = "center", fig.cap = "Image credit: Photo by Enjoy Illinois."}
+include_graphics("img/Intro_picture.png")
 ```
-
-```{r}
-style_xaringan(
-  title_slide_background_image = "img/confetti.jpg"
-)
-```
-
-
-class: center, middle
-
-## A statement of the overall goal / research question
-
 ---
 
-class: inverse, center, middle
+# Introduction
+## Data
+177 individual laser spot analyses (LASS-ICP-MS) on apatite grains.
 
-# Section title
-
----
-
-# Hello World
-
-- Click the `Knit` button to compile your presentation
-
-- Make sure to commit and push all resulting files to your GitHub repo
-
----
-
-class: inverse, middle, center
-
-# Using xaringan
-
----
-
-# xaringan
-
-- The presentation is created using the `xaringan` package
-
-- Use `---` to separate slides and `--` for incremental builds
-
---
-
-- Like this
-
----
-
-# Layouts
-
-You can use plain text
-
-- or bullet points
-
-.pull-left[
-or text in two columns $^*$
-]
-.pull-right[
-- like
-- this
-]
-
-.footnote[
-[*] And add footnotes
-]
-
----
-
-# Code
-
-```{r boring-regression}
-# a boring regression
-model <- lm(dist ~ speed, data = cars)
-tidy(model)
-glance(model)
+## Europium Anomaly
+This works as a proxy to quantify the oxidation state of the magma.
+$$Eu/Eu^* = \frac{Eu_N}{\sqrt{Sm_N \times Gd_N}}$$
+```{r data-vis, echo=FALSE}
+summary_table <- df_clean %>%
+  group_by(Type) %>%
+  summarize(
+    Mean_Eu_Anomaly = mean(Eu_anomaly, na.rm = TRUE),
+    SD_Eu_Anomaly = sd(Eu_anomaly, na.rm = TRUE),
+    Count = n()
+  )
+summary_table %>%
+  knitr::kable(format = "html")
 ```
 
 ---
 
-# Plots
+# Introduction
 
-```{r recode-species, echo = FALSE}
-# In this chunk I'm doing a bunch of analysis that I don't want to present 
-# in my slides. But I need the resulting data frame for a plot I want to present.
-iris_modified <- iris %>%
-  mutate(Species = fct_other(Species, keep = "setosa"))
-```
-
-```{r plot-iris, echo = FALSE}
-# Code hidden with echo = FALSE
-# Uses modified iris dataset from previous chunk
-# Play around with height and width until you're happy with the look
-ggplot(data = iris_modified, mapping = aes(x = Sepal.Width, y = Sepal.Length, color = Species)) +
-  geom_point() + 
-  theme_minimal() # theme options: https://ggplot2.tidyverse.org/reference/ggtheme.html
-```
-
----
-
-## Plot and text
-
-.pull-left[
-- Some text
-- goes here
-]
-.pull-right[
-```{r warning=FALSE, out.width="100%", fig.width=4, echo=FALSE}
-# see how I changed out.width and fig.width from defaults
-# to make the figure bigger
-ggplot(penguins, aes(x = bill_length_mm, y = species, color = species)) +
-  geom_boxplot() +
-  theme_minimal()
+## Objective
+Evaluate the predictive power of apatite trace element chemistry and develop a robust classification model capable of distinguishing between fertile (PCD) and barren magmatic systems.
+.center[
+```{r spider-plot, echo=F, out.width = "60%"}
+spider_data <- df_clean %>%
+  mutate(Sample_ID = row_number()) %>% 
+  select(Sample_ID, Type, ends_with("_N")) %>%
+  pivot_longer(
+    cols = ends_with("_N"), 
+    names_to = "Element", 
+    values_to = "Normalized_Value"
+  ) %>%
+  mutate(Element = str_remove(Element, "_N"))
+ree_order <- c("La", "Ce", "Pr", "Nd", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu")
+spider_data$Element <- factor(spider_data$Element, levels = ree_order)
+ggplot(spider_data, aes(x = Element, y = Normalized_Value, color = Type)) +
+  geom_line(aes(group = Sample_ID), alpha = 0.15) +
+  stat_summary(aes(group = Type), fun = mean, geom = "line", linewidth = 1.5) +
+  stat_summary(aes(group = Type), fun = mean, geom = "point", size = 2) +
+  scale_y_log10() + 
+  theme_linedraw() +
+  labs(
+    title = "Chondrite-Normalized REE Spider Diagram",
+    y = "Sample / Chondrite",
+    color = "Deposit Type"
+  ) +
+  scale_color_manual(values = c("PCD" = "#4C72B0", "Barren" = "#C44E52"))
 ```
 ]
-
 ---
 
-# Tables
+#Exploratory Geochemistry
+A visual comparison of the calculated $Eu/Eu^*$ ratio shows a distinct shift, with Barren samples exhibiting much stronger negative anomalies.
+.center[
+```{r plot, echo=F, out.width = "60%"}
+ggplot(df_clean, aes(x = Type, y = Eu_anomaly, fill = Type)) +
+  geom_boxplot(alpha = 0.7, outlier.color = "red") +
+  theme_linedraw() +
+  labs(y = expression("Eu / Eu*"), x = "") +
+  scale_fill_manual(values = c("PCD" = "#4C72B0", "Barren" = "#C44E52")) +
+  theme(legend.position = "none")
+```
+]
+---
 
-If you want to generate a table, make sure it is in the HTML format (instead of Markdown or other formats), e.g.,
+#Statistical Significance
+##Randomization Test
+**Null Hypothesis ($H_0$):** There is no difference in the mean $Eu/Eu^*$ between PCD and Barren apatite. (The variables are independent)
 
-```{r iris-table, echo = FALSE}
-kable(head(iris), format = "html")
+
+**Alternative Hypothesis ($H_A$):** There is a significant difference in the mean $Eu/Eu^*$ between the two groups.
+```{r randomization, echo=T}
+set.seed(12)
+obs_diff <- df_clean %>%
+  specify(Eu_anomaly ~ Type) %>% calculate(stat = "diff in means", order = c("PCD", "Barren"))
+
+null_dist <- df_clean %>%
+  specify(Eu_anomaly ~ Type) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = 1000, type = "permute") %>%
+  calculate(stat = "diff in means", order = c("PCD", "Barren"))
+```
+---
+.center[
+```{r randomization-plot, echo=F}
+visualize(null_dist) +
+  shade_p_value(obs_stat = obs_diff, direction = "two-sided") +
+  theme_linedraw() +
+  labs(
+    title = "Simulation-Based Null Distribution",
+    subtitle = "Red line: difference in means",
+    x = "Simulated Difference in Means (PCD - Barren)",
+    y = "Count"
+  )
+```
+```{r p-value, echo=F}
+p_value <- null_dist %>%
+  get_p_value(obs_stat = obs_diff, direction = "two-sided")
+
+p_value
+```
+]
+
+---
+#Statistical Significance
+## Bootstrap
+
+While the randomization test tells us the difference is significant.
+Calculating the 95% Bootstrap CI quantifies the magnitude of this difference.
+
+$$(\bar{x}_{PCD} - \bar{x}_{Barren})$$
+
+```{r bootstrap-ci, echo=T}
+set.seed(12)
+
+# Bootstrap distribution
+boot_dist <- df_clean %>%
+  specify(Eu_anomaly ~ Type) %>%
+  generate(reps = 1000, type = "bootstrap") %>%
+  calculate(stat = "diff in means", order = c("PCD", "Barren"))
+
+# 95% CI
+percentile_ci <- boot_dist %>%
+  get_confidence_interval(level = 0.95, type = "percentile")
 ```
 
 ---
+.center[
+```{r bootstrap-ci-plot, echo=F}
+visualize(boot_dist) +
+  shade_confidence_interval(endpoints = percentile_ci) +
+  theme_linedraw() +
+  labs(
+    title = "Bootstrap Distribution",
+    subtitle = "Shaded area represents the 95% Confidence Interval",
+    x = "Mean Eu Anomaly (PCD - Barren)",
+    y = "Count"
+  )
+percentile_ci %>%
+  knitr::kable(format = "html")
+```
+]
+---
+#Statistical Significance
+##Linear Modeling
+To quantify the variance explained by the deposit type
+```{r linear-modeling, echo=T}
+eu_model <- lm(Eu_anomaly ~ Type, data = df_clean)
+model_results <- augment(eu_model)
+rmse_calc <- model_results %>% 
+  summarize(RMSE = sqrt(mean(.resid^2)))
+```
 
-# Images
+```{r linear-modeling-table, echo=F}
+glance(eu_model) %>% 
+  select(r.squared, p.value) %>%
+  bind_cols(rmse_calc) %>%
+  knitr::kable(format = "html", digits = 4)
+```
+- The model coefficient confirmed a increase in the $Eu/Eu^*$ when transitioning from Barren to PCD-fertile systems.
 
-```{r castle, echo = FALSE, out.width = "60%", fig.align = "center", fig.cap = "Image credit: Photo by Enjoy Illinois."}
-include_graphics("img/chicago-fall.jpeg")
+- A p-value of < 0.001 provided strong evidence to reject the null hypothesis, confirming that the relationship between rock type and Europium depletion is not due to random chance.
+---
+
+#Statistical Significance
+## Comprehensive Analysis of All REEs
+
+Instead of analyzing each REE individually, I iterated through all normalized REEs. This pipeline applies the simple linear model, the randomization test (1000 permutations), and the bootstrap CI (1000 resamples) to every geochemical variable.
+
+```{r analyze-all-ree-p1, warning=F, echo=TRUE}
+# Group by the Element name
+df_long <- df_clean %>%
+  select(Type, La_N:Lu_N) %>%
+  pivot_longer(cols = -Type, names_to = "Element", values_to = "Value") %>%
+  glimpse()
+```
+---
+#Statistical Significance
+```{r analyze-all-ree-p2, warning=F, echo=TRUE}
+analyze_element <- function(sub_df) {
+  set.seed(12)
+# Slope and R-Squared
+  fit <- lm(Value ~ Type, data = sub_df)
+  tidy_fit <- tidy(fit) %>% filter(term == "TypePCD")
+  glance_fit <- glance(fit)
+# Observed Difference
+  obs <- sub_df %>%
+    specify(Value ~ Type) %>%
+    calculate(stat = "diff in means", order = c("PCD", "Barren"))
+# Randomization Test
+  null_dist <- sub_df %>%
+    specify(Value ~ Type) %>%
+    hypothesize(null = "independence") %>%
+    generate(reps = 1000, type = "permute") %>%
+    calculate(stat = "diff in means", order = c("PCD", "Barren"))
+  p_val <- null_dist %>% get_p_value(obs_stat = obs, direction = "two-sided")
+# Bootstrap CI
+  boot_dist <- sub_df %>%
+    specify(Value ~ Type) %>%
+    generate(reps = 1000, type = "bootstrap") %>%
+    calculate(stat = "diff in means", order = c("PCD", "Barren"))
+  ci <- boot_dist %>% get_confidence_interval(level = 0.95, type = "percentile")
+  
+  # Summarize
+  tibble(
+    Difference_in_Means = tidy_fit$estimate,
+    R_Squared = glance_fit$r.squared,
+    Rand_P_Value = p_val$p_value,
+    CI_Lower = ci$lower_ci,
+    CI_Upper = ci$upper_ci
+  )
+}
+```
+
+---
+#Statistical Significance
+```{r table-all-ree, warning=F, echo=F}
+# Summary table
+all_results <- df_long %>%
+  nest(.by = Element) %>% # Group data by Element into 'lists'
+  mutate(results = map(data, analyze_element)) %>% # Run the custom function
+  unnest(results) %>% 
+  select(-data) %>%
+  arrange(Rand_P_Value, desc(R_Squared)) 
+
+knitr::kable(all_results, digits = 4, 
+             caption = "Statistical Summary for All Geochemical Proxies (PCD vs. Barren)")
+```
+
+---
+#Classification Tree
+
+Using all 14 REEs simultaneously to find the optimal geochemical thresholds.
+
+```{r tree, echo=T}
+tree_data <- df_clean %>%
+  select(Type, Eu_anomaly, La_N:Lu_N)
+
+tree_spec <- decision_tree() %>%
+  set_mode("classification") %>%
+  set_engine("rpart")
+
+tree_recipe <- recipe(Type ~ ., data = tree_data)
+
+tree_workflow <- workflow() %>%
+  add_recipe(tree_recipe) %>%
+  add_model(tree_spec)
+
+
+tree_fit <- tree_workflow %>%
+  fit(data = tree_data)
 ```
 
 
 ---
+#Classification Tree
+.center[
+```{r warning=F, tree-plot, echo=F}
+tree_engine <- extract_fit_engine(tree_fit)
 
-# Feeling adventurous?
+rpart.plot(tree_engine, 
+           main = "Classification Tree for Apatite Fertility",
+           type = 3,           
+           extra = 104,        
+           box.palette = c("#C44E52", "#4C72B0"), 
+           shadow.col = "gray",
+           fallen.leaves = TRUE)
+```
+]
 
-- Want to find out more about `xaringan`? See https://slides.yihui.name/xaringan/#1.
+---
+#Conclusions
 
-- You are welcomed to use the default styling of the slides. In fact, that's what I expect majority of you will do. You will differentiate yourself with the content of your presentation.
+- The Europium anomaly ($Eu/Eu^*$) is a statistically robust indicator of magmatic fertility.
 
-- But some of you might want to play around with slide styling. The 
-`xaringanthemer` provides some solutions for this that: https://pkg.garrickadenbuie.com/xaringanthemer.
+- Classification Trees revealed that multi-element evaluation is superior. 
 
-- And if you want more bells and whistles, there is also `xaringanExtra`: https://pkg.garrickadenbuie.com/xaringanExtra.
+- LREE enrichment ($Pr_N$) identifies highly fractionated, barren magmatic systems before redox conditions are even considered.
+
+- The oxidation state (represented by the $Eu$ anomaly) acts as the definitive secondary split for fertility.

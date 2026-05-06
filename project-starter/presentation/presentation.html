@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Apatite Geochemistry as a Proxy for PCDs Fertility</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Santiago Ramos Galarza" />
+    <meta name="date" content="2026-05-06" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/metropolis.css" rel="stylesheet" />
+    <link href="libs/remark-css/metropolis-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# Apatite Geochemistry as a Proxy for PCDs Fertility
+]
+.subtitle[
+## EAES 480 Final Project
+]
+.author[
+### Santiago Ramos Galarza
+]
+.institute[
+### University of Illinois Chicago
+]
+.date[
+### 2026-05-06
+]
+
+---
+
+
+
+
+# Introduction
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="img/Intro_picture.png" alt="Image credit: Photo by Enjoy Illinois." width="100%" /&gt;
+&lt;p class="caption"&gt;Image credit: Photo by Enjoy Illinois.&lt;/p&gt;
+&lt;/div&gt;
+---
+
+# Introduction
+## Data
+177 individual laser spot analyses (LASS-ICP-MS) on apatite grains.
+
+## Europium Anomaly
+This works as a proxy to quantify the oxidation state of the magma.
+`$$Eu/Eu^* = \frac{Eu_N}{\sqrt{Sm_N \times Gd_N}}$$`
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Type &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; Mean_Eu_Anomaly &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; SD_Eu_Anomaly &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; Count &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Barren &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.2192606 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.0597581 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 69 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; PCD &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.5795699 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.3022017 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 108 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+# Introduction
+
+## Objective
+Evaluate the predictive power of apatite trace element chemistry and develop a robust classification model capable of distinguishing between fertile (PCD) and barren magmatic systems.
+.center[
+&lt;img src="presentation_files/figure-html/spider-plot-1.png" alt="" width="60%" /&gt;
+]
+---
+
+#Exploratory Geochemistry
+A visual comparison of the calculated `\(Eu/Eu^*\)` ratio shows a distinct shift, with Barren samples exhibiting much stronger negative anomalies.
+.center[
+&lt;img src="presentation_files/figure-html/plot-1.png" alt="" width="60%" /&gt;
+]
+---
+
+#Statistical Significance
+##Randomization Test
+**Null Hypothesis (`\(H_0\)`):** There is no difference in the mean `\(Eu/Eu^*\)` between PCD and Barren apatite. (The variables are independent)
+
+
+**Alternative Hypothesis (`\(H_A\)`):** There is a significant difference in the mean `\(Eu/Eu^*\)` between the two groups.
+
+``` r
+set.seed(12)
+obs_diff &lt;- df_clean %&gt;%
+  specify(Eu_anomaly ~ Type) %&gt;% calculate(stat = "diff in means", order = c("PCD", "Barren"))
+
+null_dist &lt;- df_clean %&gt;%
+  specify(Eu_anomaly ~ Type) %&gt;%
+  hypothesize(null = "independence") %&gt;%
+  generate(reps = 1000, type = "permute") %&gt;%
+  calculate(stat = "diff in means", order = c("PCD", "Barren"))
+```
+---
+.center[
+&lt;img src="presentation_files/figure-html/randomization-plot-1.png" alt="" width="80%" /&gt;
+
+```
+## Warning: Please be cautious in reporting a p-value of 0. This result is an approximation
+## based on the number of `reps` chosen in the `generate()` step.
+## ℹ See `get_p_value()` (`?infer::get_p_value()`) for more information.
+```
+
+```
+## # A tibble: 1 × 1
+##   p_value
+##     &lt;dbl&gt;
+## 1       0
+```
+]
+
+---
+#Statistical Significance
+## Bootstrap
+
+While the randomization test tells us the difference is significant.
+Calculating the 95% Bootstrap CI quantifies the magnitude of this difference.
+
+`$$(\bar{x}_{PCD} - \bar{x}_{Barren})$$`
+
+
+``` r
+set.seed(12)
+
+# Bootstrap distribution
+boot_dist &lt;- df_clean %&gt;%
+  specify(Eu_anomaly ~ Type) %&gt;%
+  generate(reps = 1000, type = "bootstrap") %&gt;%
+  calculate(stat = "diff in means", order = c("PCD", "Barren"))
+
+# 95% CI
+percentile_ci &lt;- boot_dist %&gt;%
+  get_confidence_interval(level = 0.95, type = "percentile")
+```
+
+---
+.center[
+&lt;img src="presentation_files/figure-html/bootstrap-ci-plot-1.png" alt="" width="80%" /&gt;&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:right;"&gt; lower_ci &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; upper_ci &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 0.3048002 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.4204128 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+]
+---
+#Statistical Significance
+##Linear Modeling
+To quantify the variance explained by the deposit type
+
+``` r
+eu_model &lt;- lm(Eu_anomaly ~ Type, data = df_clean)
+model_results &lt;- augment(eu_model)
+rmse_calc &lt;- model_results %&gt;% 
+  summarize(RMSE = sqrt(mean(.resid^2)))
+```
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:right;"&gt; r.squared &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; p.value &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; RMSE &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:right;"&gt; 0.3531 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.2379 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+- The model coefficient confirmed a increase in the `\(Eu/Eu^*\)` when transitioning from Barren to PCD-fertile systems.
+
+- A p-value of &lt; 0.001 provided strong evidence to reject the null hypothesis, confirming that the relationship between rock type and Europium depletion is not due to random chance.
+---
+
+#Statistical Significance
+## Comprehensive Analysis of All REEs
+
+Instead of analyzing each REE individually, I iterated through all normalized REEs. This pipeline applies the simple linear model, the randomization test (1000 permutations), and the bootstrap CI (1000 resamples) to every geochemical variable.
+
+
+``` r
+# Group by the Element name
+df_long &lt;- df_clean %&gt;%
+  select(Type, La_N:Lu_N) %&gt;%
+  pivot_longer(cols = -Type, names_to = "Element", values_to = "Value") %&gt;%
+  glimpse()
+```
+
+```
+## Rows: 2,655
+## Columns: 3
+## $ Type    &lt;chr&gt; "Barren", "Barren", "Barren", "Barren", "Barren", "Barren", "B…
+## $ Element &lt;chr&gt; "La_N", "Ce_N", "Pr_N", "Nd_N", "Sm_N", "Eu_N", "Gd_N", "Eu_an…
+## $ Value   &lt;dbl&gt; 7565.4008439, 6616.0130719, 5350.8771930, 3407.0021882, 1662.1…
+```
+---
+#Statistical Significance
+
+``` r
+analyze_element &lt;- function(sub_df) {
+  set.seed(12)
+# Slope and R-Squared
+  fit &lt;- lm(Value ~ Type, data = sub_df)
+  tidy_fit &lt;- tidy(fit) %&gt;% filter(term == "TypePCD")
+  glance_fit &lt;- glance(fit)
+# Observed Difference
+  obs &lt;- sub_df %&gt;%
+    specify(Value ~ Type) %&gt;%
+    calculate(stat = "diff in means", order = c("PCD", "Barren"))
+# Randomization Test
+  null_dist &lt;- sub_df %&gt;%
+    specify(Value ~ Type) %&gt;%
+    hypothesize(null = "independence") %&gt;%
+    generate(reps = 1000, type = "permute") %&gt;%
+    calculate(stat = "diff in means", order = c("PCD", "Barren"))
+  p_val &lt;- null_dist %&gt;% get_p_value(obs_stat = obs, direction = "two-sided")
+# Bootstrap CI
+  boot_dist &lt;- sub_df %&gt;%
+    specify(Value ~ Type) %&gt;%
+    generate(reps = 1000, type = "bootstrap") %&gt;%
+    calculate(stat = "diff in means", order = c("PCD", "Barren"))
+  ci &lt;- boot_dist %&gt;% get_confidence_interval(level = 0.95, type = "percentile")
+  
+  # Summarize
+  tibble(
+    Difference_in_Means = tidy_fit$estimate,
+    R_Squared = glance_fit$r.squared,
+    Rand_P_Value = p_val$p_value,
+    CI_Lower = ci$lower_ci,
+    CI_Upper = ci$upper_ci
+  )
+}
+```
+
+---
+#Statistical Significance
+
+Table: Statistical Summary for All Geochemical Proxies (PCD vs. Barren)
+
+|Element    | Difference_in_Means| R_Squared| Rand_P_Value|   CI_Lower|   CI_Upper|
+|:----------|-------------------:|---------:|------------:|----------:|----------:|
+|Pr_N       |          -3541.6887|    0.7262|        0.000| -3916.3028| -3169.2894|
+|Ce_N       |          -4559.7668|    0.6995|        0.000| -5061.2723| -4062.2417|
+|Nd_N       |          -2215.2542|    0.6737|        0.000| -2474.3732| -1961.9822|
+|La_N       |          -4329.5980|    0.4722|        0.000| -4983.2641| -3659.7099|
+|Eu_anomaly |              0.3603|    0.3531|        0.000|     0.3058|     0.4263|
+|Sm_N       |           -678.2407|    0.2645|        0.000|  -850.4130|  -517.7063|
+|Eu_N       |            163.2830|    0.1401|        0.000|   110.4300|   212.5500|
+|Yb_N       |             81.3255|    0.0394|        0.008|    30.2237|   129.5561|
+|Tm_N       |             84.4922|    0.0359|        0.008|    28.9336|   136.9186|
+|Gd_N       |           -169.3997|    0.0346|        0.014|  -291.2068|   -54.7879|
+|Dy_N       |            127.1274|    0.0307|        0.016|    34.6093|   211.6602|
+|Er_N       |             79.2849|    0.0230|        0.040|    11.5484|   140.5461|
+|Ho_N       |             87.8295|    0.0223|        0.046|    12.4988|   158.1271|
+|Lu_N       |             52.4331|    0.0222|        0.048|     9.4891|    94.8039|
+|Tb_N       |             81.6082|    0.0097|        0.212|   -24.6498|   182.5559|
+
+---
+#Classification Tree
+
+Using all 14 REEs simultaneously to find the optimal geochemical thresholds.
+
+
+``` r
+tree_data &lt;- df_clean %&gt;%
+  select(Type, Eu_anomaly, La_N:Lu_N)
+
+tree_spec &lt;- decision_tree() %&gt;%
+  set_mode("classification") %&gt;%
+  set_engine("rpart")
+
+tree_recipe &lt;- recipe(Type ~ ., data = tree_data)
+
+tree_workflow &lt;- workflow() %&gt;%
+  add_recipe(tree_recipe) %&gt;%
+  add_model(tree_spec)
+
+
+tree_fit &lt;- tree_workflow %&gt;%
+  fit(data = tree_data)
+```
+
+
+---
+#Classification Tree
+.center[
+&lt;img src="presentation_files/figure-html/tree-plot-1.png" alt="" width="80%" /&gt;
+]
+
+---
+#Conclusions
+
+- The Europium anomaly (`\(Eu/Eu^*\)`) is a statistically robust indicator of magmatic fertility.
+
+- Classification Trees revealed that multi-element evaluation is superior. 
+
+- LREE enrichment (`\(Pr_N\)`) identifies highly fractionated, barren magmatic systems before redox conditions are even considered.
+
+- The oxidation state (represented by the `\(Eu\)` anomaly) acts as the definitive secondary split for fertility.
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+  "ratio": "16:9",
+  "highlightStyle": "github",
+  "highlightLines": true,
+  "countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
