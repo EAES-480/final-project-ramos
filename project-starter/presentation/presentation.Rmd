@@ -292,8 +292,7 @@ all_results <- df_long %>%
   select(-data) %>%
   arrange(Rand_P_Value, desc(R_Squared)) 
 
-knitr::kable(all_results, digits = 4, 
-             caption = "Statistical Summary for All Geochemical Proxies (PCD vs. Barren)")
+knitr::kable(all_results, digits = 4)
 ```
 
 ---
@@ -340,10 +339,17 @@ rpart.plot(tree_engine,
 ---
 #Conclusions
 
+<div style="font-size: 28px;">
 - The Europium anomaly ($Eu/Eu^*$) is a statistically robust indicator of magmatic fertility.
+
+--
 
 - Classification Trees revealed that multi-element evaluation is superior. 
 
+--
+
 - LREE enrichment ($Pr_N$) identifies highly fractionated, barren magmatic systems before redox conditions are even considered.
+
+--
 
 - The oxidation state (represented by the $Eu$ anomaly) acts as the definitive secondary split for fertility.
